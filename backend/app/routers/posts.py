@@ -24,17 +24,25 @@ def get_posts(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     if cached:
         return json.loads(cached)
 
+    # Query database
     posts = db.query(Post).offset(skip).limit(limit).all()
 
-    # Save to cache (30 seconds)
-    redis_client.setex(cache_key, 30, json.dumps([
-        {**p.__dict__, 
-         "created_at": str(p.created_at),
-         "updated_at": str(p.updated_at) if p.updated_at else None
-        } for p in posts
-    ]))
+    # Convert SQLAlchemy objects to dict for caching
+    posts_dict = []
+    for p in posts:
+        posts_dict.append({
+            "id": p.id,
+            "title": p.title,
+            "content": p.content,
+            "author": p.author,
+            "created_at": p.created_at.isoformat() if p.created_at else None,
+            "updated_at": p.updated_at.isoformat() if p.updated_at else None
+        })
 
-    return posts
+    # Save to cache (30 seconds)
+    redis_client.setex(cache_key, 30, json.dumps(posts_dict))
+
+    return posts  # FastAPI will serialize using Pydantic
 
 @router.get("/{post_id}", response_model=PostResponse)
 def get_post(post_id: int, db: Session = Depends(get_db)):

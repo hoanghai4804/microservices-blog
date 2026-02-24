@@ -9,7 +9,10 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title="Blog API",
     description="Microservices Blog Platform API",
-    version="1.0.0"
+    version="1.0.0",
+    docs_url="/api/docs",       # Swagger UI at /api/docs (behind Nginx /api/)
+    redoc_url="/api/redoc",     # ReDoc at /api/redoc
+    openapi_url="/api/openapi.json",
 )
 
 # CORS

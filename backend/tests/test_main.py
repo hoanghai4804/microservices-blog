@@ -3,6 +3,7 @@ def test_imports():
     import sqlalchemy  # noqa: F401
     import redis  # noqa: F401
     import pydantic  # noqa: F401
+
     assert True
 
 

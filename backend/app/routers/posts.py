@@ -1,11 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+import json
+import os
 from typing import List
-import json, redis, os
 
+import redis
 from app.database import get_db
 from app.models.post import Post
-from app.schemas.post import PostCreate, PostUpdate, PostResponse
+from app.schemas.post import PostCreate, PostResponse, PostUpdate
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -13,8 +15,9 @@ router = APIRouter(prefix="/posts", tags=["posts"])
 redis_client = redis.Redis(
     host=os.getenv("REDIS_HOST", "redis"),
     port=int(os.getenv("REDIS_PORT", 6379)),
-    decode_responses=True
+    decode_responses=True,
 )
+
 
 @router.get("/", response_model=List[PostResponse])
 def get_posts(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
@@ -30,19 +33,22 @@ def get_posts(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     # Convert SQLAlchemy objects to dict for caching
     posts_dict = []
     for p in posts:
-        posts_dict.append({
-            "id": p.id,
-            "title": p.title,
-            "content": p.content,
-            "author": p.author,
-            "created_at": p.created_at.isoformat() if p.created_at else None,
-            "updated_at": p.updated_at.isoformat() if p.updated_at else None
-        })
+        posts_dict.append(
+            {
+                "id": p.id,
+                "title": p.title,
+                "content": p.content,
+                "author": p.author,
+                "created_at": p.created_at.isoformat() if p.created_at else None,
+                "updated_at": p.updated_at.isoformat() if p.updated_at else None,
+            }
+        )
 
     # Save to cache (30 seconds)
     redis_client.setex(cache_key, 30, json.dumps(posts_dict))
 
     return posts  # FastAPI will serialize using Pydantic
+
 
 @router.get("/{post_id}", response_model=PostResponse)
 def get_post(post_id: int, db: Session = Depends(get_db)):
@@ -50,6 +56,7 @@ def get_post(post_id: int, db: Session = Depends(get_db)):
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
     return post
+
 
 @router.post("/", response_model=PostResponse, status_code=201)
 def create_post(post: PostCreate, db: Session = Depends(get_db)):
@@ -60,6 +67,7 @@ def create_post(post: PostCreate, db: Session = Depends(get_db)):
     # Clear cache
     redis_client.flushdb()
     return db_post
+
 
 @router.put("/{post_id}", response_model=PostResponse)
 def update_post(post_id: int, post: PostUpdate, db: Session = Depends(get_db)):
@@ -72,6 +80,7 @@ def update_post(post_id: int, post: PostUpdate, db: Session = Depends(get_db)):
     db.refresh(db_post)
     redis_client.flushdb()
     return db_post
+
 
 @router.delete("/{post_id}", status_code=204)
 def delete_post(post_id: int, db: Session = Depends(get_db)):

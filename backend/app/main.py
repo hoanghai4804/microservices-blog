@@ -1,7 +1,7 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from app.database import Base, engine
 from app.routers import posts
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -10,8 +10,8 @@ app = FastAPI(
     title="Blog API",
     description="Microservices Blog Platform API",
     version="1.0.0",
-    docs_url="/api/docs",       # Swagger UI at /api/docs (behind Nginx /api/)
-    redoc_url="/api/redoc",     # ReDoc at /api/redoc
+    docs_url="/api/docs",  # Swagger UI at /api/docs (behind Nginx /api/)
+    redoc_url="/api/redoc",  # ReDoc at /api/redoc
     openapi_url="/api/openapi.json",
 )
 
@@ -19,9 +19,9 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost",      # Nginx
+        "http://localhost",  # Nginx
         "http://localhost:80",
-        "http://localhost:3000", # Dev
+        "http://localhost:3000",  # Dev
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -31,9 +31,11 @@ app.add_middleware(
 # Routers
 app.include_router(posts.router, prefix="/api")
 
+
 @app.get("/")
 def root():
     return {"message": "Blog API is running!"}
+
 
 @app.get("/health")
 def health():

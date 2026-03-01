@@ -64,7 +64,7 @@ jobs:
           python -m pytest tests/ -v
 
   # ─── JOB 3: Build Docker (chỉ chạy sau khi lint+test pass) ──
- build:
+  build:
     name: Build & Push Docker Images
     runs-on: ubuntu-latest
     needs: [lint, test]

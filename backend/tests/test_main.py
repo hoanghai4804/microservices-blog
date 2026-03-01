@@ -1,8 +1,8 @@
 def test_imports():
     import fastapi  # noqa: F401
-    import sqlalchemy  # noqa: F401
-    import redis  # noqa: F401
     import pydantic  # noqa: F401
+    import redis  # noqa: F401
+    import sqlalchemy  # noqa: F401
 
     assert True
 
